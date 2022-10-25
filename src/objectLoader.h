@@ -50,3 +50,6 @@ private:
     vec3 getNormal(std::string s);
     face getFace(std::string s);
 };
+
+
+

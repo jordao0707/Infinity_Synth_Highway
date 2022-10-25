@@ -23,8 +23,14 @@ GLuint best_car_id;
 GLuint sun_id;
 
 std::vector<GLuint> objectsScene;
-std::vector<GLuint> carsObjects;
+
+std::vector<GLuint> cars_on_road;
+std::vector<GLuint> cars_after_road;
+std::vector<GLuint> cars_before_road;
+std::vector<int> cars_speed;
+std::vector<vec3> cars_positions;
 std::vector<GLuint> palmsObjects;
+std::vector<vec3> palms_positions;
 
 GLFWwindow *window;
 
@@ -37,7 +43,7 @@ void controlCar(GLFWwindow *window, int key, int scancode, int action, int mods)
     }
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_UP) == GLFW_REPEAT)
     {
-        speed = speed < 30 ? speed + 0.09 : speed;
+        speed = speed <= 40 ? speed + 0.2 : speed;
     }
     if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_REPEAT)
     {
@@ -45,11 +51,11 @@ void controlCar(GLFWwindow *window, int key, int scancode, int action, int mods)
     }
     if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_REPEAT)
     {
-        car_direction = car_direction > -4.5 ? car_direction - 0.1 * (speed * speed) / 100 : -4.5;
+        car_direction = car_direction > -7.5 ? car_direction - 0.05 * (speed * speed) / 100 : -7.5;
     }
     if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_REPEAT)
     {
-        car_direction = car_direction < 4.5 ? car_direction + 0.1 * (speed * speed) / 100 : 4.5;
+        car_direction = car_direction < 7.5 ? car_direction + 0.05 * (speed * speed) / 100 : 7.5;
     }
 }
 
@@ -63,7 +69,7 @@ void resize(int w, int h)
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     gluLookAt(
-        car_direction / 24, 0.0, 2,
+        car_direction / 30, 0.0, 2,
         0, 0, -1,
         car_direction / 60, 1, 0);
 }
@@ -91,8 +97,8 @@ void initObjects()
     sun_id = road_id + 2;
 
     drawRoad(road_id);
-    
-    // CARREGA CENARIO 
+
+    // CARREGA CENARIO
     obj->loadObject("./objects/sphere.obj");
     obj->drawObject(sun_id, vec3(0.0, 0.0, 0.0), 1);
 
@@ -103,7 +109,7 @@ void initObjects()
         float pos_x = -0.1 + ((float)((rand() + rand()) % 200)) / 45;
         float pos_z = -0.1 + ((float)((rand() + rand()) % 20)) / 19;
 
-        if (pos_x <= pos.x && (pos_x + 0.4) > pos.x)
+        if (pos_x <= pos.x && (pos_x + 0.4) > pos.x) // gera outro numero randomico caso esteja na mesma posição
         {
             pos_x = -2.0 + ((float)(rand() % 200)) / 45;
         }
@@ -119,20 +125,26 @@ void initObjects()
     for (int i = 0; i < total_obstacles; i++)
     {
         srand(time(0) + (i * 10));
-        float pos_x = -1 + ((float)((rand() + rand()) % 200)) / 25;
-        float pos_z = 100 + ((float)((rand() + rand()) % 200)) / 40;
+        float pos_x = -1 + ((float)((rand() + rand()) % 200)) / 25;  // define aleatoriamente a posição em x dos adversios
+        float pos_z = 100 + ((float)((rand() + rand()) % 200)) / 40; // define aleatoriamente a posição em z dos adversarios
 
         pos = vec3(pos_x, -4, -pos_z);
         GLuint temp_id = total_objects_scenery + 1 + i;
-        carsObjects.push_back(temp_id);
-        obj->drawObject(carsObjects[i], pos, 1 + rand()%3);
+        cars_before_road.push_back(temp_id);
+        cars_positions.push_back(pos);
+        cars_speed.push_back(rand() % 30);                         // define velocidade dos carros
+        obj->drawObject(cars_before_road[i], pos, 1 + rand() % 3); // define as cores aleatoriamente dos carros
+        if (rand() % total_obstacles == 0)
+        {
+            cars_on_road.push_back(temp_id);
+        }
     }
 }
 
 void draw(float frameTime)
 {
 
-    speed = speed > 0 ? speed - 0.0085 : 0;
+    speed = speed > 0 ? speed - 0.015 : 0;
     road_deslocation += frameTime * speed;
     sun_deslocation = sun_deslocation <= 360 ? sun_deslocation + (frameTime * 20) : 0;
     if (road_deslocation >= 1.1)
@@ -149,11 +161,6 @@ void draw(float frameTime)
     glTranslated(0, 0, road_deslocation);
     glCallList(road_id); // pista
     glPopMatrix();
-    glPushMatrix();
-    glScaled(0.1, 0.1, 0.1);
-    glTranslated(car_direction, -6.0, 5.0);
-    glCallList(best_car_id); // carro
-    glPopMatrix();
 
     // CENÁRIO
     for (int i = 0; i < objectsScene.size(); i++)
@@ -167,21 +174,69 @@ void draw(float frameTime)
         glPopMatrix();
     }
 
+    // CARROS
+    glPushMatrix();
+    glScaled(0.1, 0.1, 0.1);
+    glTranslated(car_direction, -6.0, 5.0);
+    glCallList(best_car_id); // carro
+    glPopMatrix();
+
     // OBSTACULOS
-    for (int i = 0; i < carsObjects.size(); i++)
+    for (int i = 0; i < cars_on_road.size(); i++)
     {
-        GLuint car_id = carsObjects[i];
+        GLuint car_id = cars_on_road[i];
+        vec3 pos = cars_positions[i];
+
+        if (pos.z >= 200)
+        {
+            cars_after_road.push_back(cars_on_road[i]);
+            cars_on_road.at(i) = (GLuint)-1;
+        }
+        else if (pos.z <= -200)
+        {
+            cars_before_road.push_back(cars_on_road[i]);
+            cars_on_road.at(i) = (GLuint)-1;
+        }
+        else
+        {
+            cars_positions[i].z += (speed - cars_speed[i]) * frameTime;
+        }
+
         glPushMatrix();
         glScaled(0.1, 0.1, 0.1);
-        glCallList(car_id); // cars
+
+        glTranslated(pos.x, pos.y, pos.z);
+
+        if (cars_on_road[i] != (GLuint)-1)
+            glCallList(car_id); // cars
         glPopMatrix();
+    }
+
+    if (cars_on_road.size() <= 0)
+    {
+        for (int i = 0; i < cars_speed.size(); i++)
+        {
+            float pos_x = -1 + ((float)((rand() + rand()) % 200)) / 25;  // define aleatoriamente a posição em x dos adversios
+            float pos_z = 100 + ((float)((rand() + rand()) % 200)) / 40; // define aleatoriamente a posição em z dos adversarios
+
+            if (speed < cars_speed[i] && cars_after_road.size() > 0 && i < cars_after_road.size() - 1)
+            {
+                cars_on_road.push_back(cars_after_road.back());
+                cars_after_road.pop_back();
+            }
+            if (speed > cars_speed[i] && cars_before_road.size() > 0 && i < cars_before_road.size() - 1)
+            {
+                cars_on_road.push_back(cars_before_road.back());
+                cars_positions.push_back(vec3(pos_x, -4, pos_z));
+
+                cars_before_road.pop_back();
+            }
+        }
     }
 }
 
 int main()
 {
-
-    // ISoundEngine *SoundEngine = createIrrKlangDevice();
 
     initWindow();
     initObjects();

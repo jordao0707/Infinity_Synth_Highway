@@ -1,4 +1,4 @@
-g++ -o ish ./window.cpp ./highway.cpp ./objectLoader.cpp  -lGL -lglfw -lGLU
+g++ -o ./bin/ish ./src/window.cpp ./src/highway.cpp ./src/objectLoader.cpp  -lGL -lglfw -lGLU
 echo  "     Autor: Jordão Rodrigues Dantas"
-echo  "   ///// Endless Synth Highway //////"
-./ish 
+echo  "   ///// Infinity Synth Highway //////"
+./bin/ish 
