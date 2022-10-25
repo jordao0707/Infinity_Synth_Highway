@@ -1,11 +1,12 @@
+// Jordão Rodrigues Dantas
+// 403686
+// Ciência da Computação
 #include "objectLoader.h"
-#include <vector>
 
 std::vector<vec3> vertices;
 std::vector<vec3> normals;
 std::vector<face> faces;
 vec3 position;
-std::vector<vec3> colors = {vec3(1.0, 0.0, 1.0), vec3(1.0, 1.0, 0.0), vec3(0.0, 1.0, 0.0), vec3(1.0, 0.4, 0.0)};
 vec3 ObjectLoader::getVertex(std::string s)
 {
     float x, y, z;

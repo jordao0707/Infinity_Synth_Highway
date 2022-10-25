@@ -1,3 +1,7 @@
+// Jordão Rodrigues Dantas
+// 403686
+// CiÊncia da Computação
+
 #include <GLFW/glfw3.h>
 #include <GL/glu.h>
 #include <GL/gl.h>
@@ -9,7 +13,7 @@
 
 #include "highway.h"
 #include "objectLoader.h"
-
+#include "../hearders/consts.h"
 int total_objects_scenery = 12;
 int total_obstacles = 8;
 

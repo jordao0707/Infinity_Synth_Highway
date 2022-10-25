@@ -1,3 +1,6 @@
+// Jordão Rodrigues Dantas
+// 403686
+// CiÊncia da Computação
 #include <GL/glu.h>
 #ifndef __HIGHWAY_H__
 #define __HIGHWAY_H__

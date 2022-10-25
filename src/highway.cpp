@@ -1,3 +1,6 @@
+// Jordão Rodrigues Dantas
+// 403686
+// CiÊncia da Computação
 #include <GLFW/glfw3.h>
 #include <GL/gl.h>
 #include <iostream>
