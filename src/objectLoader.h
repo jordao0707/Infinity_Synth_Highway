@@ -5,7 +5,6 @@
 #include <vector>
 #include <GL/gl.h>
 
-#include "../hearders/consts.h"
 #include "../hearders/structs.h"
 
 #pragma once
