@@ -6,5 +6,6 @@
 #define __HIGHWAY_H__
 
 void drawRoad(GLuint list_id);
-
+float getDeslocation();
+float getRoadLength();
 #endif

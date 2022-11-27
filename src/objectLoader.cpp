@@ -1,14 +1,11 @@
-// Jordão Rodrigues Dantas
-// 403686
+// Jordão Rodrigues Dantas - 403686
 // Ciência da Computação
 #include "./objectLoader.h"
 
-std::vector<vec3> vertices;
-std::vector<vec3> normals;
-std::vector<face> faces;
+// CORRES PADRÕES DOS OBJETOS
 std::vector<vec3> colors = {vec3(1.0, 0.0, 1.0), vec3(1.0, 1.0, 0.0), vec3(0.0, 1.0, 0.0), vec3(1.0, 0.4, 0.0)};
 
-vec3 position;
+
 
 vec3 ObjectLoader::getVertex(std::string s)
 {
@@ -71,7 +68,7 @@ void ObjectLoader::loadObject(const char *file_path)
     }
   }
 
-void ObjectLoader::drawObject(unsigned &id, vec3 pos, int color_id)
+void ObjectLoader::drawObject(GLuint id, vec3 pos, int color_id)
 {
     glNewList(id, GL_COMPILE);
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);

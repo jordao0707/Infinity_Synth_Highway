@@ -1,4 +1,6 @@
 #include <GL/gl.h>
+#ifndef STRUCT_H_
+#define STRUCT_H_
 typedef struct vec3
 {
     float x, y, z;
@@ -34,3 +36,5 @@ typedef struct face
         index = i;
     }
 } face;
+
+#endif
