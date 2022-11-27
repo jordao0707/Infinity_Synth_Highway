@@ -77,7 +77,7 @@ void initObjects()
     for (int i = 0; i < total_cars_adversary; i++)
     {
         // id da lista - posição em vec3 - posição na pista (antes, pista, depois) - cor
-        cars.push_back(Car(total_objects_scenery + i, vec3(0, 0, 0), -1, (getRandomNumber(i) % 20) * 10, rand() % 4));
+        cars.push_back(Car(total_objects_scenery + i, vec3(0, 0, 0), -1, (getRandomNumber(i) % 20) * 10, rand() % 3));
         objectLoader->drawObject(cars[i].getObjectId(), cars[i].getPosition(), cars[i].getColor());
     }
 
@@ -93,31 +93,31 @@ void draw()
     glCallList(road_id);
     glPopMatrix();
 
-    // // SOL
-    // glPushMatrix();
-    // glCallList(sun_id);
-    // glPopMatrix();
+    // SOL
+    glPushMatrix();
+    glCallList(sun_id);
+    glPopMatrix();
 
-    // // PALMEIRAS
-    // for (int i = 0; i < objectsScene.size(); i++)
-    // {
-    //     glPushMatrix();
-    //     glCallList(objectsScene[i]);
-    //     glPopMatrix();
-    // }
+    // PALMEIRAS
+    for (int i = 0; i < objectsScene.size(); i++)
+    {
+        glPushMatrix();
+        glCallList(objectsScene[i]);
+        glPopMatrix();
+    }
 
-    // // CARROS
-    // for (int i = 0; i < cars.size(); i++)
-    // {
-    //     glPushMatrix();
-    //     glCallList(cars[i].getObjectId());
-    //     glPopMatrix();
-    // }
+    // CARROS
+    for (int i = 0; i < cars.size(); i++)
+    {
+        glPushMatrix();
+        glCallList(cars[i].getObjectId());
+        glPopMatrix();
+    }
 
-    // // PRINCIPAL
-    // glPushMatrix();
-    // glCallList(best_car_id);
-    // glPopMatrix();
+    // PRINCIPAL
+    glPushMatrix();
+    glCallList(bestCar->getObjectId());
+    glPopMatrix();
 }
 
 int main()
@@ -143,7 +143,11 @@ int main()
 
     glfwTerminate();
     // DELETANDO ID'S DE LISTAS
-    glDeleteLists(sun_id, total_objects_scenery + total_cars_adversary + 3);
+    glDeleteLists(sun_id, total_objects_scenery + total_cars_adversary + 2);
+    cars.clear();
+    objectsScene.clear();
+    free(bestCar);
+
     return 0;
 }
 
@@ -166,13 +170,13 @@ void controlCar(GLFWwindow *window, int key, int scancode, int action, int mods)
     {
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) // CLOSE WINDOW
             glfwSetWindowShouldClose(window, GLFW_TRUE);
-        else if (glfwGetKey(window, GLFW_KEY_UP) != GLFW_RELEASE) // ACELERA
+        if (glfwGetKey(window, GLFW_KEY_UP) != GLFW_RELEASE) // ACELERA
             bestCar->carAcceleration();
-        else if (glfwGetKey(window, GLFW_KEY_DOWN) != GLFW_RELEASE) // PARA
+        if (glfwGetKey(window, GLFW_KEY_DOWN) != GLFW_RELEASE) // PARA
             bestCar->carBreake();
-        else if (glfwGetKey(window, GLFW_KEY_LEFT) != GLFW_RELEASE) // ESQUERDA
+        if (glfwGetKey(window, GLFW_KEY_LEFT) != GLFW_RELEASE) // ESQUERDA
             bestCar->carTurnsLeft(-5);
-        else if (glfwGetKey(window, GLFW_KEY_RIGHT) != GLFW_RELEASE) // DIREITA
+        if (glfwGetKey(window, GLFW_KEY_RIGHT) != GLFW_RELEASE) // DIREITA
             bestCar->carTurnsRight(5);
         is_idle = 1;
     }

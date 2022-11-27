@@ -6,8 +6,8 @@ class Car
 {
 
 public:
-    float car_direction;
-    float speed;
+    float car_direction = 0;
+    float speed = 0;
     Car(GLuint obj_id, vec3 pst, int pst_on_rd, float spd, int c)
     {
         object_id = obj_id;
