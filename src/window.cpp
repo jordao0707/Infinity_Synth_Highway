@@ -14,23 +14,20 @@
 #include "./objectLoader.h"
 #include "./car.h"
 
-// VARIÁVEIS
-ushort is_idle = 1;
-float countTimer = 0;
-
-float frameTime = 0;
-
 int total_objects_scenery = 12;
 int total_cars_adversary = 10;
 
+// VARIÁVEIS DE CONTROLE
+ushort is_idle = 1;
+float countTimer = 0;
+float frameTime = 0;
+
 // VARIÁVEIS INCREMENTAIS
 float road_deslocation = 0;
-float car_direction = 0;
-float speed = 0;
 
-// ID DOS OBJETOS PRINCIPAIS
+// PRINCIPAIS OBJETOS PRINCIPAIS
+Car *bestCar;
 GLuint road_id;
-GLuint best_car_id;
 GLuint sun_id;
 
 // GRUPOS DE OBJETOS (ADVERSÁRIOS E CENÁRIO)
@@ -51,11 +48,12 @@ int getRandomNumber(int seed);
 void initObjects()
 {
     ObjectLoader *objectLoader = new ObjectLoader;
+
     // DEFINE OS ID INICIAL DE CADA GRUPO DE OBJETOS
-    road_id = glGenLists(total_objects_scenery + total_cars_adversary + 3);
-    best_car_id = road_id + 1;
-    sun_id = road_id + 2;
-    GLuint scenary_id = sun_id + 1;
+    sun_id = glGenLists(total_objects_scenery + total_cars_adversary + 3);
+    road_id = sun_id + 1;
+    GLuint best_car_id = sun_id + 2;
+    GLuint scenary_id = sun_id + 3;
     GLuint adversary_id = total_objects_scenery + 1;
 
     // CARREGA PISTA
@@ -74,16 +72,17 @@ void initObjects()
     }
 
     // CARREGA CARROS(PRINCIPAL E OBSTACULOS)
+    bestCar = new Car(best_car_id, vec3(0, 0, 0), 0, 0, 0);
     objectLoader->loadObject("./objects/car.obj");
     for (int i = 0; i < total_cars_adversary; i++)
     {
         // id da lista - posição em vec3 - posição na pista (antes, pista, depois) - cor
-        cars.push_back(Car(total_objects_scenery + i, vec3(0, 0, 0), 0, (getRandomNumber(i) % 20) * 10, rand() % 3));
+        cars.push_back(Car(total_objects_scenery + i, vec3(0, 0, 0), -1, (getRandomNumber(i) % 20) * 10, rand() % 4));
         objectLoader->drawObject(cars[i].getObjectId(), cars[i].getPosition(), cars[i].getColor());
     }
 
     // CARREGA CARRO PRINCIPAL
-    objectLoader->drawObject(best_car_id, vec3(0, 0, 0), 0);
+    objectLoader->drawObject(bestCar->getObjectId(), bestCar->getPosition(), bestCar->getColor());
 }
 
 void draw()
@@ -144,28 +143,8 @@ int main()
 
     glfwTerminate();
     // DELETANDO ID'S DE LISTAS
-    glDeleteLists(best_car_id, total_objects_scenery + total_cars_adversary + 3);
+    glDeleteLists(sun_id, total_objects_scenery + total_cars_adversary + 3);
     return 0;
-}
-
-float carAcceleration()
-{
-    return 0.5 + speed * (6 / 5);
-}
-
-float carDeceleration()
-{
-    return speed - 2.0;
-}
-
-float carTurnsLeft()
-{
-    return car_direction - 0.05 * (speed * speed) / 1000;
-}
-
-float carTurnsRight()
-{
-    return car_direction + 0.05 * (speed * speed) / 1000;
 }
 
 void resize(int w, int h)
@@ -174,10 +153,10 @@ void resize(int w, int h)
     float aspect = (float)w / (float)h;
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(45.0 + carAcceleration() / 10, aspect, 1.0, 400.0);
+    gluPerspective(45.0 , aspect, 1.0, 400.0);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    gluLookAt(car_direction / 75, 0.0, 2.0, 0, 0, -1, car_direction / 150, 1.0, 0.0);
+    gluLookAt(bestCar->getCarDirection() / 75, 0.0, 2.0, 0, 0, -1, bestCar->getCarDirection() / 150, 1.0, 0.0);
 }
 
 void controlCar(GLFWwindow *window, int key, int scancode, int action, int mods)
@@ -188,13 +167,13 @@ void controlCar(GLFWwindow *window, int key, int scancode, int action, int mods)
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) // CLOSE WINDOW
             glfwSetWindowShouldClose(window, GLFW_TRUE);
         else if (glfwGetKey(window, GLFW_KEY_UP) != GLFW_RELEASE) // ACELERA
-            speed = speed <= 200 ? carAcceleration() : speed;
+            bestCar->carAcceleration();
         else if (glfwGetKey(window, GLFW_KEY_DOWN) != GLFW_RELEASE) // PARA
-            speed = speed > 0.0 ? carDeceleration() : 0;
+            bestCar->carBreake();
         else if (glfwGetKey(window, GLFW_KEY_LEFT) != GLFW_RELEASE) // ESQUERDA
-            car_direction = car_direction > -5 ? carTurnsLeft() : -5;
+            bestCar->carTurnsLeft(-5);
         else if (glfwGetKey(window, GLFW_KEY_RIGHT) != GLFW_RELEASE) // DIREITA
-            car_direction = car_direction < 5 ? carTurnsRight() : 5;
+            bestCar->carTurnsRight(5);
         is_idle = 1;
     }
 }
@@ -210,12 +189,13 @@ void updateGameLoop()
 
 void updateObjects()
 {
-    road_deslocation += frameTime * speed;
+    // MOVIMENTO DA PISTA
+    road_deslocation += frameTime * bestCar->getSpeed();
     road_deslocation = road_deslocation < getDeslocation() ? road_deslocation : 0;
 
     // PARADA LENTA
     if (is_idle && (int)countTimer % 2)
-        speed = speed > 0 ? speed - 0.09 : 0;
+        bestCar->carDeceleration();
 }
 
 int getRandomNumber(int seed)
