@@ -22,6 +22,10 @@ GLuint Car::getObjectId()
     return object_id;
 }
 
+void Car::setPositionOnRoad(position_road p){
+    position_on_road = p;
+}
+
 int Car::getColor()
 {
     return color;

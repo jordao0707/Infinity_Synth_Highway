@@ -35,6 +35,16 @@ std::vector<Car> cars;
 std::vector<GLuint> objectsScene;
 GLFWwindow *window;
 
+// ANGULOS DE CAMERA
+ushort select_cam = 0;
+std::vector<Cam> cameras = {
+    Cam(vec3(0.2, 0.4, -2.0), vec3(0.2, 0.4, -5.0), vec3(0.0, 1.0, 0.0)),
+    Cam(vec3(0.0, 0.0, 12.0), vec3(0.0, 0.0, 1.0), vec3(0.0, 1.0, 0.0)),
+    Cam(vec3(70.0, 3.0, -5.0), vec3(6.0, 1.0, -15.0), vec3(0.0, 1.0, 0.0)),
+    Cam(vec3(-70.0, 3.0, 5.0), vec3(6.0, 1.0, 15.0), vec3(0.0, 1.0, 0.0)),
+    Cam(vec3(-70.0, 1.6, -10.0), vec3(-70, 1.0, -11.0), vec3(0.0, 1.0, 0.0)),
+};
+
 // FUNÇÕES
 void controlCar(GLFWwindow *window, int key, int scancode, int action, int mods);
 void resize(int w, int h);
@@ -43,8 +53,7 @@ void updateObjects();
 void initObjects();
 void initWindow();
 void draw();
-int getRandomNumber(int seed);
-
+double getRandomNumber(int seed, float init, float end);
 void initObjects()
 {
     ObjectLoader *objectLoader = new ObjectLoader;
@@ -68,16 +77,23 @@ void initObjects()
     for (int i = 0; i < total_objects_scenery; i++)
     {
         objectsScene.push_back(scenary_id + i);
+        glPushMatrix();
+        glScaled(10.0, 10.0, 10.0);
+        double rx = getRandomNumber(i, 0, 20);
+        double ry = getRandomNumber(i, -1, 0);
+        glTranslated(rx, 0, ry);
         objectLoader->drawObject(objectsScene[i], vec3(0, 0, 0), 2);
+        glPopMatrix();
     }
 
     // CARREGA CARROS(PRINCIPAL E OBSTACULOS)
-    bestCar = new Car(best_car_id, vec3(0, 0, 0), 0, 0, 0);
+    bestCar = new Car(best_car_id, vec3(0, -2, -10), 0, 3);
     objectLoader->loadObject("./objects/car.obj");
     for (int i = 0; i < total_cars_adversary; i++)
     {
-        // id da lista - posição em vec3 - posição na pista (antes, pista, depois) - cor
-        cars.push_back(Car(total_objects_scenery + i, vec3(0, 0, 0), -1, (getRandomNumber(i) % 20) * 10, rand() % 3));
+        // id da lista - posição em vec3, velocidade - cor
+        vec3 pos = vec3(getRandomNumber(i, -5, 5), -2, -50);
+        cars.push_back(Car(total_objects_scenery + i, pos, ((int)getRandomNumber(i, 0, 150)), rand() % 3));
         objectLoader->drawObject(cars[i].getObjectId(), cars[i].getPosition(), cars[i].getColor());
     }
 
@@ -95,29 +111,45 @@ void draw()
 
     // SOL
     glPushMatrix();
+    glScaled(10.0, 10.0, 10.0);
+    glTranslated(0.0, 0.0, -10);
     glCallList(sun_id);
     glPopMatrix();
 
-    // PALMEIRAS
-    for (int i = 0; i < objectsScene.size(); i++)
-    {
-        glPushMatrix();
-        glCallList(objectsScene[i]);
-        glPopMatrix();
-    }
+    // // PALMEIRAS
+    // for (int i = 0; i < objectsScene.size(); i++)
+    // {
+    //     glPushMatrix();
+    //     glCallList(objectsScene[i]);
+    //     glPopMatrix();
+    // }
 
     // CARROS
-    for (int i = 0; i < cars.size(); i++)
+    for (Car car : cars)
     {
         glPushMatrix();
-        glCallList(cars[i].getObjectId());
+        glScaled(0.5, 0.5, 0.5);
+        vec3 pos = car.getPosition();
+        float adversary_speed = car.getSpeed();
+        float best_speed = bestCar->getSpeed();
+        glTranslated(pos.x, pos.y, pos.z + (best_speed - adversary_speed));
+        if (car.getPositionOnRoad() == ON)
+            glCallList(car.getObjectId());
         glPopMatrix();
     }
 
     // PRINCIPAL
     glPushMatrix();
+    glScaled(0.5, 0.5, 0.5);
     glCallList(bestCar->getObjectId());
     glPopMatrix();
+}
+
+double getRandomNumber(int seed, float init, float end)
+{
+    srand(time(0) + seed);
+    double r = (double)rand() / RAND_MAX;
+    return init + r * (end - init);
 }
 
 int main()
@@ -130,13 +162,14 @@ int main()
     // GAME LOOP
     while (!glfwWindowShouldClose(window))
     {
+        // calcula tempo de frame
         frameTime = (float)glfwGetTime() - lastTime;
         lastTime += frameTime;
-        countTimer = countTimer < 10 ? countTimer + frameTime : 0;
-
+        countTimer = countTimer < 20 ? countTimer + frameTime : 0;
+        // atualiza estados
         updateGameLoop();
         updateObjects();
-
+        // desenha e limpa tela
         draw();
         glfwSwapBuffers(window);
     }
@@ -157,10 +190,13 @@ void resize(int w, int h)
     float aspect = (float)w / (float)h;
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(45.0 , aspect, 1.0, 400.0);
+    gluPerspective(45.0 + bestCar->getSpeed() / 20, aspect, 1.0, 400.0);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    gluLookAt(bestCar->getCarDirection() / 75, 0.0, 2.0, 0, 0, -1, bestCar->getCarDirection() / 150, 1.0, 0.0);
+    vec3 pos = cameras[select_cam].pos;
+    vec3 look = cameras[select_cam].look;
+    vec3 top = cameras[select_cam].top;
+    gluLookAt(pos.x, pos.y, pos.z, look.x, look.y, look.z, bestCar->getCarDirection() / 100, top.y, top.z);
 }
 
 void controlCar(GLFWwindow *window, int key, int scancode, int action, int mods)
@@ -178,6 +214,53 @@ void controlCar(GLFWwindow *window, int key, int scancode, int action, int mods)
             bestCar->carTurnsLeft(-5);
         if (glfwGetKey(window, GLFW_KEY_RIGHT) != GLFW_RELEASE) // DIREITA
             bestCar->carTurnsRight(5);
+        if (glfwGetKey(window, GLFW_KEY_SPACE) != GLFW_RELEASE) // TROCA DE CAMERA
+            select_cam = select_cam < cameras.size() ? select_cam + 1 : 0;
+
+        // DEBUG
+        {
+            // CONTROLE DE CAMERA POSIÇÂO
+            vec3 pos = cameras[select_cam].pos;
+            vec3 look = cameras[select_cam].look;
+            vec3 top = cameras[select_cam].top;
+            if (glfwGetKey(window, GLFW_KEY_A) != GLFW_RELEASE)
+                pos.x += 0.2;
+            if (glfwGetKey(window, GLFW_KEY_D) != GLFW_RELEASE)
+                pos.x -= 0.2;
+            if (glfwGetKey(window, GLFW_KEY_W) != GLFW_RELEASE)
+                pos.y += 0.2;
+            if (glfwGetKey(window, GLFW_KEY_S) != GLFW_RELEASE)
+                pos.y -= 0.2;
+            if (glfwGetKey(window, GLFW_KEY_Q) != GLFW_RELEASE)
+                pos.z += 0.2;
+            if (glfwGetKey(window, GLFW_KEY_E) != GLFW_RELEASE)
+                pos.z -= 0.2;
+
+            // CONTROLE DE CAMERA LOOK
+            if (glfwGetKey(window, GLFW_KEY_I) != GLFW_RELEASE)
+                look.x += 0.2;
+            if (glfwGetKey(window, GLFW_KEY_K) != GLFW_RELEASE)
+                look.x -= 0.2;
+            if (glfwGetKey(window, GLFW_KEY_J) != GLFW_RELEASE)
+                look.y += 0.2;
+            if (glfwGetKey(window, GLFW_KEY_L) != GLFW_RELEASE)
+                look.y -= 0.2;
+            if (glfwGetKey(window, GLFW_KEY_U) != GLFW_RELEASE)
+                look.z += 2;
+            if (glfwGetKey(window, GLFW_KEY_O) != GLFW_RELEASE)
+                look.z -= 2;
+            if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)
+            {
+                pos = vec3(0.0, 0.0, 0.0);
+                look = vec3(0.0, 0.0, 0.0);
+            }
+            cameras[select_cam].pos = pos;
+            cameras[select_cam].look = look;
+            cameras[select_cam].top = top;
+            std ::cout << "posi x:" << pos.x << " y:" << pos.y << " z:" << pos.z << "\n";
+            std ::cout << "look x:" << look.x << " y:" << look.y << " z:" << look.z << "\n \n";
+        }
+
         is_idle = 1;
     }
 }
@@ -197,15 +280,15 @@ void updateObjects()
     road_deslocation += frameTime * bestCar->getSpeed();
     road_deslocation = road_deslocation < getDeslocation() ? road_deslocation : 0;
 
+    if (!((int)countTimer % 10))
+    {
+        int r = (int)getRandomNumber((int)countTimer, 0, cars.size());
+        cars[r].setPositionOnRoad(ON);
+    }
+
     // PARADA LENTA
     if (is_idle && (int)countTimer % 2)
         bestCar->carDeceleration();
-}
-
-int getRandomNumber(int seed)
-{
-    srand(time(0) + seed);
-    return (rand() + rand()) / 2;
 }
 
 void initWindow()

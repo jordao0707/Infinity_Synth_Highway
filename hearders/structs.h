@@ -16,6 +16,13 @@ typedef struct vec3
     }
 } vec3;
 
+typedef struct Cam
+{
+    vec3 pos, look, top;
+    Cam() : pos(vec3(0.0, 0.0, 0.0)), look(vec3(0.0, 0.0, 0.0)), top(vec3(0.0, 0.0, 0.0)) {}
+    Cam(vec3 pos_, vec3 look_, vec3 top_) : pos(pos_), look(look_), top(top_) {}
+} Cam;
+
 typedef struct Object
 {
     GLuint id;
