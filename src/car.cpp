@@ -43,7 +43,15 @@ float Car::carAcceleration()
 
 float Car::carDeceleration()
 {
-    return speed = speed > 0 ? speed - 0.08 : 0;
+    return speed = speed > 0 ? speed - 0.075 : 0;
+}
+
+
+float Car::getDeslocation (){
+    return deslocation; 
+}
+void Car::setDeslocation(float frameTime, float adversary_speed){
+    deslocation +=(adversary_speed - speed) * frameTime *10 ;
 }
 
 float Car::carTurnsLeft(float left_limit)

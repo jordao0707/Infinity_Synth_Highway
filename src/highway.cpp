@@ -13,21 +13,23 @@ float deslocation = 10;
 void drawRoad(GLuint list_id)
 {
     glNewList(list_id, GL_COMPILE);
-    glBegin(GL_LINES);
-    glColor3f(0.0, 0.0, 0.0);
+    glBegin(GL_TRIANGLES);
+    glColor3f(0.0, 1.0, 0.0);
 
-    for (float i = -road_length; i < road_length; i+=deslocation)
-    {  
-        glVertex3f( -50,  -2, i);
-        glVertex3f(  50,  -2, i);
+    for (float i = -road_length; i < road_length; i += deslocation)
+    {
+        glVertex3f(-50, -2, i);
+        glVertex3f(50, -2, i);
     }
-     
+
     glEnd();
     glEndList();
 }
-float getDeslocation (){
+float getDeslocation()
+{
     return deslocation;
 }
-float getRoadLength(){
+float getRoadLength()
+{
     return road_length;
 }

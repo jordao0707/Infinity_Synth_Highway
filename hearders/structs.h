@@ -1,20 +1,31 @@
-#include <GL/gl.h>
 #ifndef STRUCT_H_
 #define STRUCT_H_
-typedef struct vec3
+#include <GL/gl.h>
+
+#include <glm/glm.hpp>
+
+using namespace glm;
+// typedef struct vec3
+// {
+//     float x, y, z;
+//     vec3() : x(0.0), y(0.0), z(0.0) {}
+//     vec3(float x_, float y_, float z_) : x(x_), y(y_), z(z_) {}
+//     vec3 operator+(const vec3 &v) const
+//     {
+//         return vec3(x + v.x, y + v.y, z + v.z);
+//     }
+//     vec3 operator*(float k)
+//     {
+//         return vec3(k * x, k * y, k * z);
+//     }
+// } vec3;
+
+typedef struct material
 {
-    float x, y, z;
-    vec3() : x(0.0), y(0.0), z(0.0) {}
-    vec3(float x_, float y_, float z_) : x(x_), y(y_), z(z_) {}
-    vec3 operator+(const vec3 &v) const
-    {
-        return vec3(x + v.x, y + v.y, z + v.z);
-    }
-    vec3 operator*(float k)
-    {
-        return vec3(k * x, k * y, k * z);
-    }
-} vec3;
+    vec3 ambient, diffuse, specular;
+    float shine;
+    material(vec3 a_, vec3 d_, vec3 s_, float sh_) : ambient(a_), diffuse(d_), specular(s_) { shine = sh_; }
+} material;
 
 typedef struct Cam
 {
